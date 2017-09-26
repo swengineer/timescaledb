@@ -1613,12 +1613,21 @@ timescaledb_ddl_command_start(
 		.parsetree = parsetree,
 #endif
 	};
+	bool		altering_timescaledb = false;
+
+	if (IsA(parsetree, AlterExtensionStmt))
+	{
+		AlterExtensionStmt *stmt = (AlterExtensionStmt *) parsetree;
+
+		altering_timescaledb = (strcmp(stmt->extname, EXTENSION_NAME) == 0);
+	}
 
 	/*
 	 * If we are restoring, we don't want to recurse to chunks or block
-	 * operations on chunks. If we do, the restore will fail.
+	 * operations on chunks. If we do, the restore will fail. We also don't
+	 * want to load the extension if we just got the command to alter it.
 	 */
-	if (!extension_is_loaded() || guc_restoring)
+	if (altering_timescaledb || !extension_is_loaded() || guc_restoring)
 	{
 		prev_ProcessUtility(&args);
 		return;
