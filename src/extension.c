@@ -13,6 +13,7 @@
 
 #include "catalog.h"
 #include "extension.h"
+#include "guc.h"
 
 #define EXTENSION_PROXY_TABLE "cache_inval_extension"
 
@@ -200,6 +201,10 @@ extension_is_loaded(void)
 		Oid			extension_oid = get_extension_oid(EXTENSION_NAME, true);
 		if (OidIsValid(extension_oid) && extension_oid == CurrentExtensionObject)
 			return false;
+	}
+	if (guc_restoring)
+	{
+		return false;
 	}
 
 	switch (extstate)
